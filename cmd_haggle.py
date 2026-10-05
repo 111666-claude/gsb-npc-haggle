@@ -22,13 +22,15 @@ def load(path, base, floor, tiers):
     shop = Shop(base, floor, tiers)
     if os.path.exists(path):
         with open(path, encoding="utf-8") as handle:
-            shop.offers = json.load(handle).get("offers", [])
+            data = json.load(handle)
+        shop.offers = data.get("offers", [])
+        shop.seen = {key: tuple(value) for key, value in data.get("seen", {}).items()}
     return shop
 
 
 def save(path, shop):
     with open(path, "w", encoding="utf-8") as handle:
-        json.dump({"offers": shop.offers}, handle)
+        json.dump({"offers": shop.offers, "seen": shop.seen}, handle)
 
 
 def main(argv=None):
@@ -58,7 +60,7 @@ def main(argv=None):
         print("scanned=%d" % shop.scanned)
     elif args.command and args.command[0] == "haggle":
         shop = load(args.state, 1000, 100, [10, 20, 30])
-        price, ok = shop.haggle("cmd", int(args.command[1]))
+        price, ok = shop.haggle("cmd-%d" % len(shop.seen), int(args.command[1]))
         save(args.state, shop)
         print("price=%d ok=%s" % (price, str(ok).lower()))
     elif args.command and args.command[0] == "show":
